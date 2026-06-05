@@ -1,0 +1,189 @@
+﻿@model HRMS.Web.Models.RoleMenuViewModel
+@using HRMS.Application.Interfaces.Security
+@inject IIdProtector IdProtector
+
+@{
+    ViewData["Title"] = "Role Menu Mapping";
+}
+
+@if (TempData["RoleMenuSuccess"] != null)
+{
+    <div style="display:flex; justify-content:center; margin-bottom:10px;">
+        <div class="alert alert-success fade show d-inline-flex align-items-center gap-2 px-3 py-2 small mb-0"
+             style="width:fit-content; position:relative;">
+
+            <span>@TempData["RoleMenuSuccess"]</span>
+
+            <button type="button"
+                    data-bs-dismiss="alert"
+                    style="
+                border:none;
+                background:none;
+                font-size:16px;
+                line-height:1;
+                margin-left:8px;
+                cursor:pointer;">
+                ×
+            </button>
+        </div>
+    </div>
+}
+
+
+<div class="d-flex justify-content-end mb-3">
+    <a asp-controller="Home"
+       asp-action="Dashboard"
+       class="btn btn-secondary btn-sm">
+        ← Back to Dashboard
+    </a>
+</div>
+
+<!--  ROLE SELECT -->
+<form method="get" asp-action="Index" class="mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <label class="form-label">Select Role</label>
+
+            <select class="form-select"
+                    name="roleId"
+                    onchange="this.form.submit()">
+
+                <option value="">-- Select --</option>
+
+                @foreach (var role in Model.Roles)
+                {
+                    var encryptedRoleId = role.RoleId > 0
+                        ? IdProtector.Protect(role.RoleId.ToString())
+                        : "";
+
+                    @if (role.RoleId == Model.SelectedRoleId)
+                    {
+                        <option value="@encryptedRoleId" selected>
+                            @role.RoleName
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@encryptedRoleId">
+                            @role.RoleName
+                        </option>
+                    }
+
+                }
+            </select>
+        </div>
+    </div>
+</form>
+
+@if (Model.SelectedRoleId > 0)
+{
+    <!--  MENU MAPPING FORM -->
+    <form method="post" asp-action="Save">
+
+        <!-- ENCRYPTED ROLE ID -->
+        <input type="hidden"
+               name="roleId"
+               value="@IdProtector.Protect(Model.SelectedRoleId.ToString())" />
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:80px">Select</th>
+                    <th>Menu Name</th>
+                    <th>Menu Url</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @{
+                    var parentMenus = Model.Menus
+                        .Where(m => m.ParentMenuId == null)
+                        .OrderBy(m => m.MenuOrder)
+                        .ToList();
+                }
+
+                @foreach (var parent in parentMenus)
+                {
+                    var encryptedParentId = IdProtector.Protect(parent.MenuId.ToString());
+
+                    <tr class="table-secondary">
+                        <td class="text-center">
+                            @if (parent.MenuName == "Dashboard")
+                            {
+                                <input type="checkbox" checked disabled />
+                                <input type="hidden"
+                                       name="menuIds"
+                                       value="@encryptedParentId" />
+                            }
+                            else
+                            {
+                                <input type="checkbox"
+                                       name="menuIds"
+                                       value="@encryptedParentId"
+                                @(Model.AssignedMenuIds.Contains(parent.MenuId) ? "checked" : "") />
+                            }
+                        </td>
+
+                        <td><strong>@parent.MenuName</strong></td>
+                        <td>@parent.MenuUrl</td>
+                    </tr>
+
+                    var children = Model.Menus
+                        .Where(m => m.ParentMenuId == parent.MenuId)
+                        .OrderBy(m => m.MenuOrder)
+                        .ToList();
+
+                    foreach (var child in children)
+                    {
+                        var encryptedChildId = IdProtector.Protect(child.MenuId.ToString());
+
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox"
+                                       name="menuIds"
+                                       value="@encryptedChildId"
+                                @(Model.AssignedMenuIds.Contains(child.MenuId) ? "checked" : "") />
+                            </td>
+
+                            <td style="padding-left:30px;">
+                                ↳ @child.MenuName
+                            </td>
+
+                            <td>@child.MenuUrl</td>
+                        </tr>
+
+                        var grandChildren = Model.Menus
+                            .Where(m => m.ParentMenuId == child.MenuId)
+                            .OrderBy(m => m.MenuOrder)
+                            .ToList();
+
+                        foreach (var sub in grandChildren)
+                        {
+                            var encryptedSubId = IdProtector.Protect(sub.MenuId.ToString());
+
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox"
+                                           name="menuIds"
+                                           value="@encryptedSubId"
+                                    @(Model.AssignedMenuIds.Contains(sub.MenuId) ? "checked" : "") />
+                                </td>
+
+                                <td style="padding-left:60px;">
+                                    ↳↳ @sub.MenuName
+                                </td>
+
+                                <td>@sub.MenuUrl</td>
+                            </tr>
+                        }
+                    }
+                }
+
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary">
+            Save Mapping
+        </button>
+    </form>
+}

@@ -1,0 +1,315 @@
+﻿@model IEnumerable<HRMS.Domain.Entities.EmployeeDto>
+@using HRMS.Application.Interfaces.Security
+@inject IIdProtector IdProtector
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+@if (TempData["EmployeeSuccess"] is string message)
+{
+    TempData.Remove("EmployeeSuccess");
+
+    <div style="display:flex; justify-content:center; margin-bottom:10px;">
+        <div class="alert alert-success fade show d-inline-flex align-items-center gap-2 px-3 py-2 small mb-0"
+             style="width:fit-content; position:relative;">
+
+            <span>@message</span>
+
+            <button type="button"
+                    data-bs-dismiss="alert"
+                    style="border:none; background:none; font-size:16px; line-height:1; margin-left:8px; cursor:pointer;">
+                ×
+            </button>
+        </div>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <a asp-action="Create" class="btn btn-primary">
+        Create New Employee
+    </a>
+
+    <div class="d-flex align-items-center gap-3">
+
+        <form asp-action="Index" method="get" class="d-flex gap-2 align-items-center">
+
+            <select name="filterBy" class="form-select form-select-sm" style="width:170px">
+                <option value="">Filter By</option>
+                <option value="EmployeeCode">Employee Code</option>
+                <option value="Name">Name</option>
+                <option value="Department">Department</option>
+                <option value="Designation">Designation</option>
+                <option value="Role">Role</option>
+            </select>
+
+            <input type="text"
+                   name="filterValue"
+                   class="form-control form-control-sm"
+                   placeholder="Enter value"
+                   style="width:220px" />
+
+            <button type="submit" class="btn btn-secondary btn-sm">
+                Filter
+            </button>
+
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                Clear
+            </a>
+
+            <a asp-action="ExportToExcel"
+                   class="btn btn-outline-success btn-sm">
+                <i class="fa fa-file-excel me-1"></i> Export
+            </a>
+
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Employee Code</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Role</th>
+                <th>Joining Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var emp in Model)
+                {
+                    var encryptedId = IdProtector.Protect(emp.EmployeeID.ToString());
+
+                    <tr>
+                        <td>@emp.EmployeeCode</td>
+                        <td>@emp.EmployeeName</td>
+                        <td>@emp.Email</td>
+                        <td>@emp.MobileNumber</td>
+                        <td>@emp.DepartmentName</td>
+                        <td>@emp.DesignationName</td>
+                        <td>@emp.RoleName</td>
+                        <td>@emp.JoiningDate.ToShortDateString()</td>
+
+                        <td>
+                            @if (emp.Status)
+                            {
+                                <button class="btn btn-success btn-sm"
+                                        onclick="openStatusModal('@encryptedId', '@emp.Status.ToString().ToLower()')">
+                                    ✓ Active
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="openStatusModal('@encryptedId', '@emp.Status.ToString().ToLower()')">
+                                    ✗ Inactive
+                                </button>
+                            }
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@encryptedId" class="btn btn-info btn-sm">
+                                    Details
+                                </a>
+
+                                <a asp-action="Edit" asp-route-id="@encryptedId" class="btn btn-warning btn-sm">
+                                    Edit
+                                </a>
+
+                                <a asp-action="Delete" asp-route-id="@encryptedId" class="btn btn-danger btn-sm">
+                                    Delete
+                                </a>
+
+                                <a asp-action="DownloadEmployeePdf"
+                                       asp-route-id="@emp.EmployeeID"
+                                       class="btn btn-sm btn-dark"
+                                       title="Download PDF">
+                                    <i class="fa fa-download"></i>
+                                </a>
+
+                                <a class="btn btn-outline-dark btn-sm"
+                                       title="View Org Chart"
+                                       onclick="loadOrgChart(@emp.EmployeeID)">
+                                    <i class="fa fa-sitemap"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="11" class="text-center text-muted">
+                        No employees found
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- ✅ ORG CHART MODAL -->
+<div id="orgChartModal" style="
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.5);
+    z-index:9999;
+    justify-content:center;
+    align-items:center;
+    ">
+
+    <div style="
+        background:#fff;
+        width:90%;
+        max-width:1200px;
+        height:80vh;
+        padding:20px;
+        border-radius:10px;
+        position:relative;
+        box-shadow:0 5px 20px rgba(0,0,0,0.3);
+        display:flex;
+        flex-direction:column;
+        ">
+
+        <!-- Close -->
+        <button onclick="closeOrgChart()" style="
+            position:absolute;
+            top:10px;
+            right:15px;
+            border:none;
+            background:none;
+            font-size:22px;
+            cursor:pointer;
+            ">
+            ×
+        </button>
+
+        <!-- Chart -->
+        <div style="flex:1; overflow:auto;">
+            <div id="orgChartContainer"></div>
+        </div>
+
+        <!-- Download Bottom Right -->
+        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+            <button onclick="downloadOrgChart()" class="btn btn-success btn-sm">
+                Download Chart
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function openStatusModal(id, currentStatus) {
+
+    let isCurrentlyActive = (currentStatus === "true");
+
+    let newStatus = !isCurrentlyActive; // 🔥 TOGGLE
+
+    let actionText = isCurrentlyActive ? "Deactivate" : "Activate";
+
+    Swal.fire({
+        title: "Change Status",
+        text: "Do you want to change employee status?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: actionText,
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            fetch('/Employee/UpdateStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `employeeId=${encodeURIComponent(id)}&status=${newStatus}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+            
+        }
+    });
+}
+</script>
+
+@section Scripts {
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        let orgChartData = [];
+
+        function loadOrgChart(id) {
+        fetch('/Employee/OrgChart?id=' + id)
+        .then(res => res.json())
+        .then(data => {
+        orgChartData = data;
+        openOrgChartModal();
+        renderOrgChart(data);
+        })
+        .catch(err => console.error(err));
+        }
+
+        function openOrgChartModal() {
+        document.getElementById("orgChartModal").style.display = "flex";
+        }
+
+        function closeOrgChart() {
+        document.getElementById("orgChartModal").style.display = "none";
+        }
+
+        function renderOrgChart(dataArray) {
+        google.charts.load('current', { packages: ["orgchart"] });
+        google.charts.setOnLoadCallback(() => drawChart(dataArray));
+        }
+
+        function drawChart(dataArray) {
+        var data = new google.visualization.DataTable();
+
+        data.addColumn('string', 'Name');
+        data.addColumn('string', 'Manager');
+
+        data.addRows(dataArray.slice(1));
+
+        var chart = new google.visualization.OrgChart(
+        document.getElementById('orgChartContainer')
+        );
+
+        chart.draw(data, { allowHtml: true });
+        }
+
+        function downloadOrgChart() {
+        const chart = document.getElementById("orgChartContainer");
+
+        html2canvas(chart).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'org-chart.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        });
+        }
+    </script>
+}

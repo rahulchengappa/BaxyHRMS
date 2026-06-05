@@ -1,0 +1,23 @@
+﻿@model HRMS.Domain.Entities.DashboardDto
+
+@{
+    Layout = "_LayoutDashboard";
+}
+
+<h2>Welcome to HRMS Dashboard</h2>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="p-4 bg-primary text-white rounded shadow-sm">
+            <h4>Employees</h4>
+            <p>Total Employees: @Model.TotalEmployees</p> 
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="p-4 bg-success text-white rounded shadow-sm">
+            <h4>New Joinees</h4>
+            <p>This Month: @Model.NewJoiners</p> 
+        </div>
+    </div>
+</div>

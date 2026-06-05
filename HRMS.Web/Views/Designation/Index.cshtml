@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "Designation List";
+}
+
+@if (TempData["DesignationSuccess"] != null)
+{
+    <div style="display:flex; justify-content:center; margin-bottom:10px;">
+        <div class="alert alert-success fade show d-inline-flex align-items-center gap-2 px-3 py-2 small mb-0"
+             style="width:fit-content; position:relative;">
+
+            <span>@TempData["DesignationSuccess"]</span>
+
+            <button type="button"
+                    data-bs-dismiss="alert"
+                    style="
+                border:none;
+                background:none;
+                font-size:16px;
+                line-height:1;
+                margin-left:8px;
+                cursor:pointer;">
+                ×
+            </button>
+        </div>
+    </div>
+}
+
+<div class="d-flex justify-content-end mb-3">
+    <a asp-controller="Home"
+       asp-action="Dashboard"
+       class="btn btn-secondary btn-sm">
+        ← Back to Dashboard
+    </a>
+</div>
+
+
+
+@model List<HRMS.Domain.Entities.DesignationDto>
+
+
+<a asp-action="Create" class="btn btn-primary mb-3">Add Designation</a>
+
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+    </tr>
+    @foreach (var d in Model)
+    {
+        <tr>
+            <td>@d.DesignationId</td>
+            <td>@d.DesignationName</td>
+        </tr>
+    }
+</table>

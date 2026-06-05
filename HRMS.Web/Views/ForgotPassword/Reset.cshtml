@@ -1,0 +1,60 @@
+﻿@model string
+
+@{
+    ViewData["Title"] = "Reset Password";
+}
+
+@{
+    Layout = "_PublicLayout";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <!--controls width -->
+            
+            <div class="text-center">
+                <h2>Reset Your Password</h2>
+
+                <form asp-controller="ForgotPassword"
+                      asp-action="ResetPasswordPost"
+                      method="post">
+
+                    <!-- Hidden token -->
+                    <input type="hidden" name="token" value="@Model" />
+
+                    <input type="password"
+                           name="newPassword"
+                           class="form-control mt-3"
+                           placeholder="Enter new password"
+                           required />
+
+                    <small class="text-muted">
+                        Password must contain:
+                    </small>
+
+                    <ul class="text-muted text-start mb-2">
+                        <li>Minimum 8 characters</li>
+                        <li>1 uppercase letter</li>
+                        <li>1 lowercase letter</li>
+                        <li>1 number</li>
+                        <li>1 special character</li>
+                    </ul>
+
+                    <button type="submit" class="btn btn-success w-100 mt-3">
+                        Update Password
+                    </button>
+
+                    @if (ViewBag.Error != null)
+                    {
+                        <p class="text-danger mt-3">@ViewBag.Error</p>
+                    }
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+    
+
+</div>

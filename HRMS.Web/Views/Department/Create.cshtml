@@ -1,0 +1,49 @@
+﻿@model HRMS.Domain.Entities.DepartmentDto
+@{
+    ViewData["Title"] = "Add Department";
+}
+
+<div class="container mt-4">
+   
+    <form asp-action="Create" method="post">
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+        {
+            <div class="alert alert-danger alert-dismissible fade show px-3 py-2 position-relative" role="alert" style="display:inline-block;">
+
+                <span class="pe-5">
+                    @(ViewData.ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .FirstOrDefault()?.ErrorMessage)
+                </span>
+
+                <button type="button"
+                        class="btn-close position-absolute top-50 end-0 translate-middle-y me-3"
+                        data-bs-dismiss="alert"
+                        aria-label="Close">
+                </button>
+            </div>
+        }
+        <div class="row">
+            
+            <div class="col-md-6 col-lg-5">
+                <div class="mb-3">
+                    <label class="form-label">Department Name</label>
+                    
+                    <input asp-for="DepartmentName"
+                           class="form-control form-control-sm" />
+
+                    <span asp-validation-for="DepartmentName" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-sm">Save</button>
+
+        <a asp-controller="Home"
+               asp-action="Dashboard"
+               class="btn btn-secondary btn-sm">
+            Back
+        </a>
+    </form>
+</div>
