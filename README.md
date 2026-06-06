@@ -52,9 +52,13 @@ The project follows a layered architecture and inspiration from clean architectu
 
 HRMS.Web
 │
+
 ├── HRMS.Application
+
 ├── HRMS.Domain
+
 ├── HRMS.Infrastructure
+
 └── SQL Server Database
 
 
